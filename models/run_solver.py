@@ -35,5 +35,8 @@ if __name__ == "__main__":
     print(filename)        
 
     model = BioProc(np.array(["protein_production", "protein_production", "protein_production", "protein_production", "protein_degradation", "protein_degradation", "Kd","hill", "protein_production", "protein_degradation", "Kd", "hill"]), model_mode=model_mode, parameter_values=param_values, avg_dev=30)                                      
-    sol = solver.Solver(model)                        
+    print("Bioprocessor made")
+    sol = solver.Solver(model)
+    print("Solver made")
+    print("We are going in run")
     sol.run(filename, maxDepth=1) #do not cluster    

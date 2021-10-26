@@ -75,10 +75,10 @@ The main class
 creator.create("FitnessMax", base.Fitness, weights=(1.0,)) 
 creator.create("Candidate", list, fitness=creator.FitnessMax)                                       
                                                            
-                                                               
+global cunt
 
 class Solver:
-    def __init__(self, model, populationSize=10000, NGEN = 10, nsamples = 1e5):                                                                     
+    def __init__(self, model, populationSize=100, NGEN = 100, nsamples = 1e5):
         self.model = model                   
         self.populationSize = populationSize          
         self.NGEN = NGEN              
@@ -96,7 +96,11 @@ class Solver:
         self.toolbox.register("select", tools.selTournament, tournsize=int(self.populationSize/10))             
     
     #estimate initial values with GA
-    def findNominalValues(self):            
+    def findNominalValues(self):
+        fitness = self.model.modes[0]
+        ff = fitness([33.706, 16.347, 14.181, 34.356, 2.913, 0.4983,  2.0619,  4.886, 37.874,  0.413,  7.451,  4.153])
+        print("This is fitness value of one: " + str(ff))
+
 
         tic = time.perf_counter()                         
         nominalVals = []   
@@ -115,15 +119,31 @@ class Solver:
             
             
             for gen in range(self.NGEN):  
-                print(gen)           
+                print("This is generation: " + str(gen))
+                print("This is length of NGEN: " + str(self.NGEN))
                 #generate offspprings with crossover and mutations
-                offspring = algorithms.varAnd(self.popu, self.toolbox, cxpb=0.5, mutpb=0.75)  
+                offspring = algorithms.varAnd(self.popu, self.toolbox, cxpb=0.5, mutpb=0.75)
+                print("Offspring is done")
+                print("This is type of offspring: " + str(type(offspring)))
+                print("This is length of offspring: " + str(len(offspring)))
+                print("THIS IS OFFSPRING:")
+                print(*offspring)
                 #evaluate individuals
-                fits = self.toolbox.map(self.toolbox.evaluate, offspring)     
-                for fit, ind in zip(fits, offspring):      
+                fits = self.toolbox.map(self.toolbox.evaluate, offspring)
+                print("Fits is done")
+                counter = 0
+                for fit, ind in zip(fits, offspring):
+                    print("Counter:" + str(counter))
+                    print("This is ind:")
+                    print(ind)
+                    print("And this is fit:")
+                    print(fit)
                     if self.model.isViable(ind, fitness=fit) and ind not in nominalValsMode:      
                         nominalValsMode.append(ind)          
-                    ind.fitness.values = fit      
+                    ind.fitness.values = fit
+                    counter = counter + 1
+                blop = time.perf_counter()
+                print("Time so far: " + str(blop - tic) + "s")
                 #roulete wheel selection
                 self.popu = self.toolbox.select(offspring, k=len(self.popu))      
             
@@ -331,7 +351,8 @@ class Solver:
         
         if not viablePoints: 
             print("No viable points found!")  
-            return 
+            return
+        exit(99)
         
         #dump viable points to file  
         pickle.dump(viablePoints, open(filename + "ViableSet_IterGA.p", "wb+"))   

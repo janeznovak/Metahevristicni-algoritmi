@@ -1,53 +1,71 @@
 import numpy as np
-from bioproc.hill_functions import *   
- 
+from bioproc.hill_functions import *
+# import warnings
+# warnings.filterwarnings("error")
+
+
 """
 FLIP-FLOP MODELS
 """
 # MASTER-SLAVE D FLIP-FLOP QSSA MODEL
 def ff_stochastic_model(Y, T, params, omega):
-	p = np.zeros(12)  
+	p = np.zeros(12)
 
 	a, not_a, q, not_q, d, clk = Y
 	alpha1, alpha2, alpha3, alpha4, delta1, delta2, Kd, n = params
-    
-	p[0] = alpha1*(pow(d/(Kd*omega), n)/(1 + pow(d/(Kd*omega), n) + pow(clk/(Kd*omega), n) + pow(d/(Kd*omega), n)*pow(clk/(Kd*omega), n)))*omega   
-	p[1] = alpha2*(1/(1 + pow(not_a/(Kd*omega), n)))*omega    
-	p[2] = delta1*a  
-	p[3] = alpha1*(1/(1 + pow(d/(Kd*omega), n) + pow(clk/(Kd*omega), n) + pow(d/(Kd*omega), n)*pow(clk/(Kd*omega), n)))*omega   
-	p[4] = alpha2*(1/(1 + pow(a/(Kd*omega), n)))*omega   
-	p[5] = delta1*not_a 
-	p[6] = alpha3*((pow(a/(Kd*omega), n)*pow(clk/(Kd*omega), n))/(1 + pow(a/(Kd*omega), n) + pow(clk/(Kd*omega), n) + pow(a/(Kd*omega), n)*pow(clk/(Kd*omega), n)))*omega
-	p[7] = alpha4*(1/(1 + pow(not_q/(Kd*omega), n)))*omega   
-	p[8] = delta2*q 
-	p[9] = alpha3*((pow(not_a/(Kd*omega), n)*pow(clk/(Kd*omega), n))/(1 + pow(not_a/(Kd*omega), n) + pow(clk/(Kd*omega), n) + pow(not_a/(Kd*omega), n)*pow(clk/(Kd*omega), n)))*omega   
-	p[10] = alpha4*(1/(1 + pow(q/(Kd*omega), n)))*omega 
-	p[11] = delta2*not_q 
 
-	#propensities     
-	return p   
-	
-	
+	p[0] = alpha1*(pow(d/(Kd*omega), n)/(1 + pow(d/(Kd*omega), n) + pow(clk/(Kd*omega), n) + pow(d/(Kd*omega), n)*pow(clk/(Kd*omega), n)))*omega
+	p[1] = alpha2*(1/(1 + pow(not_a/(Kd*omega), n)))*omega
+	p[2] = delta1*a
+	p[3] = alpha1*(1/(1 + pow(d/(Kd*omega), n) + pow(clk/(Kd*omega), n) + pow(d/(Kd*omega), n)*pow(clk/(Kd*omega), n)))*omega
+	p[4] = alpha2*(1/(1 + pow(a/(Kd*omega), n)))*omega
+	p[5] = delta1*not_a
+	p[6] = alpha3*((pow(a/(Kd*omega), n)*pow(clk/(Kd*omega), n))/(1 + pow(a/(Kd*omega), n) + pow(clk/(Kd*omega), n) + pow(a/(Kd*omega), n)*pow(clk/(Kd*omega), n)))*omega
+	p[7] = alpha4*(1/(1 + pow(not_q/(Kd*omega), n)))*omega
+	p[8] = delta2*q
+	p[9] = alpha3*((pow(not_a/(Kd*omega), n)*pow(clk/(Kd*omega), n))/(1 + pow(not_a/(Kd*omega), n) + pow(clk/(Kd*omega), n) + pow(not_a/(Kd*omega), n)*pow(clk/(Kd*omega), n)))*omega
+	p[10] = alpha4*(1/(1 + pow(q/(Kd*omega), n)))*omega
+	p[11] = delta2*not_q
+
+	#propensities
+	return p
+
+
 # MASTER-SLAVE D FLIP-FLOP MODEL
-def ff_ode_model(Y, T, params): 
-    
+def ff_ode_model(Y, T, params):
+
     a, not_a, q, not_q, d, clk = Y
     alpha1, alpha2, alpha3, alpha4, delta1, delta2, Kd, n = params
 
-    da_dt     = alpha1*(pow(d/Kd, n)/(1 + pow(d/Kd, n) + pow(clk/Kd, n) + pow(d/Kd, n)*pow(clk/Kd, n))) + alpha2*(1/(1 + pow(not_a/Kd, n))) - delta1 *a 
-    dnot_a_dt = alpha1*(1/(1 + pow(d/Kd, n) + pow(clk/Kd, n) + pow(d/Kd, n)*pow(clk/Kd, n))) + alpha2*(1/(1 + pow(a/Kd, n))) - delta1*not_a   
-    dq_dt     = alpha3*((pow(a/Kd, n)*pow(clk/Kd, n))/(1 + pow(a/Kd, n) + pow(clk/Kd, n) + pow(a/Kd, n)*pow(clk/Kd, n))) + alpha4*(1/(1 + pow(not_q/Kd, n))) - delta2*q  
-    dnot_q_dt = alpha3*((pow(not_a/Kd, n)*pow(clk/Kd, n))/(1 + pow(not_a/Kd, n) + pow(clk/Kd, n) + pow(not_a/Kd, n)*pow(clk/Kd, n))) + alpha4*(1/(1 + pow(q/Kd, n))) - delta2*not_q   
+    # try:
+    #     da_dt     = alpha1*(pow(d/Kd, n)/(1 + pow(d/Kd, n) + pow(clk/Kd, n) + pow(d/Kd, n)*pow(clk/Kd, n))) + alpha2*(1/(1 + pow(not_a/Kd, n))) - delta1 *a
+    #     dnot_a_dt = alpha1*(1/(1 + pow(d/Kd, n) + pow(clk/Kd, n) + pow(d/Kd, n)*pow(clk/Kd, n))) + alpha2*(1/(1 + pow(a/Kd, n))) - delta1*not_a
+    #     dq_dt     = alpha3*((pow(a/Kd, n)*pow(clk/Kd, n))/(1 + pow(a/Kd, n) + pow(clk/Kd, n) + pow(a/Kd, n)*pow(clk/Kd, n))) + alpha4*(1/(1 + pow(not_q/Kd, n))) - delta2*q
+    #     dnot_q_dt = alpha3*((pow(not_a/Kd, n)*pow(clk/Kd, n))/(1 + pow(not_a/Kd, n) + pow(clk/Kd, n) + pow(not_a/Kd, n)*pow(clk/Kd, n))) + alpha4*(1/(1 + pow(q/Kd, n))) - delta2*not_q
+    # except RuntimeWarning as rw:
+    #     print("This is a, nota, q, notq, d, clk, alpha1, alpha2, alpha3, alpha4, delta1, delta2, Kd, n when error:")
+    #     print(str(a) + " " + str(not_a) + " " + str(q) + " " + str(not_q) + " " + str(d) + " " + str(clk) + " " + str(alpha1) + " " + str(alpha2) + " " + str(alpha3) + " " + str(alpha4) + " " + str(delta1) + " " + str(delta2) + " " + str(Kd) + " " + str(n))
+    #     print("This is Kd when warning: " + str(Kd))
+    #     print("And params")
+    #     print(params)
+    #     print(rw)
+    #     exit(111)
 
+    da_dt = alpha1 * (pow(d / Kd, n) / (1 + pow(d / Kd, n) + pow(clk / Kd, n) + pow(d / Kd, n) * pow(clk / Kd, n))) + alpha2 * (1 / (1 + pow(not_a / Kd, n))) - delta1 * a
+    dnot_a_dt = alpha1 * (1 / (1 + pow(d / Kd, n) + pow(clk / Kd, n) + pow(d / Kd, n) * pow(clk / Kd, n))) + alpha2 * (1 / (1 + pow(a / Kd, n))) - delta1 * not_a
+    dq_dt = alpha3 * ((pow(a / Kd, n) * pow(clk / Kd, n)) / (1 + pow(a / Kd, n) + pow(clk / Kd, n) + pow(a / Kd, n) * pow(clk / Kd, n))) + alpha4 * (1 / (1 + pow(not_q / Kd, n))) - delta2 * q
+    dnot_q_dt = alpha3 * ((pow(not_a / Kd, n) * pow(clk / Kd, n)) / (1 + pow(not_a / Kd, n) + pow(clk / Kd, n) + pow(not_a / Kd, n) * pow(clk / Kd, n))) + alpha4 * (1 / (1 + pow(q / Kd, n))) - delta2 * not_q
 
-    return np.array([da_dt, dnot_a_dt, dq_dt, dnot_q_dt]) 
+    return np.array([da_dt, dnot_a_dt, dq_dt, dnot_q_dt])
+
+    # return np.array([da_dt, dnot_a_dt, dq_dt, dnot_q_dt])
 
 # FF MODEL WITH ASYNCHRONOUS RESET AND SET
 # dodana parametra deltaE, KM
 # dodani vhodni spremenljivki RESET in SET
 # dodano 23. 1. 2020
-def ff_ode_model_RS(Y, T, params): 
-    
+def ff_ode_model_RS(Y, T, params):
+
     a, not_a, q, not_q, d, clk, RESET, SET = Y
 
     repress_both = True
@@ -55,11 +73,11 @@ def ff_ode_model_RS(Y, T, params):
     if repress_both:
             sum_one = a + q
             sum_zero = not_a + not_q
-    
+
     alpha1, alpha2, alpha3, alpha4, delta1, delta2, Kd, n, deltaE, KM = params
 
 
-    da_dt     = alpha1*(pow(d/Kd, n)/(1 + pow(d/Kd, n) + pow(clk/Kd, n) + pow(d/Kd, n)*pow(clk/Kd, n))) + alpha2*(1/(1 + pow(not_a/Kd, n))) - delta1 *a 
+    da_dt     = alpha1*(pow(d/Kd, n)/(1 + pow(d/Kd, n) + pow(clk/Kd, n) + pow(d/Kd, n)*pow(clk/Kd, n))) + alpha2*(1/(1 + pow(not_a/Kd, n))) - delta1 *a
 
     #deltaE = delta1
     if repress_both:
@@ -72,19 +90,19 @@ def ff_ode_model_RS(Y, T, params):
     if repress_both:
         dnot_a_dt += -not_a*(deltaE*SET/(KM+sum_zero))
     else:
-        dnot_a_dt += -not_a*(deltaE*SET/(KM+not_a))    
+        dnot_a_dt += -not_a*(deltaE*SET/(KM+not_a))
 
 
     #deltaE = delta2
     dq_dt     = alpha3*((pow(a/Kd, n)*pow(clk/Kd, n))/(1 + pow(a/Kd, n) + pow(clk/Kd, n) + pow(a/Kd, n)*pow(clk/Kd, n))) + alpha4*(1/(1 + pow(not_q/Kd, n))) - delta2*q
     if repress_both:
         dq_dt += -q*(deltaE*RESET/(KM+sum_one))
-    
-    dnot_q_dt = alpha3*((pow(not_a/Kd, n)*pow(clk/Kd, n))/(1 + pow(not_a/Kd, n) + pow(clk/Kd, n) + pow(not_a/Kd, n)*pow(clk/Kd, n))) + alpha4*(1/(1 + pow(q/Kd, n))) - delta2*not_q   
+
+    dnot_q_dt = alpha3*((pow(not_a/Kd, n)*pow(clk/Kd, n))/(1 + pow(not_a/Kd, n) + pow(clk/Kd, n) + pow(not_a/Kd, n)*pow(clk/Kd, n))) + alpha4*(1/(1 + pow(q/Kd, n))) - delta2*not_q
     if repress_both:
         dnot_q_dt += -not_q*(deltaE*SET/(KM+sum_zero))
-   
-    return np.array([da_dt, dnot_a_dt, dq_dt, dnot_q_dt]) 
+
+    return np.array([da_dt, dnot_a_dt, dq_dt, dnot_q_dt])
 
 
 """
@@ -92,75 +110,75 @@ ADRESSING MODELS
 """
 
 # ADDRESSING 1-BIT QSSA MODEL
-def addressing_stochastic_one_bit_model(Y, T, params, omega):   
+def addressing_stochastic_one_bit_model(Y, T, params, omega):
     alpha, delta, Kd, n = params
-    _,_, q1, not_q1, i1, i2 = Y  
-    p = np.zeros(4) 
-	
-    p[0] = alpha*activate_1(not_q1, Kd*omega, n)*omega  
-    p[1] = delta*i1  
-    p[2] = alpha*activate_1(q1, Kd*omega, n)*omega 
+    _,_, q1, not_q1, i1, i2 = Y
+    p = np.zeros(4)
+
+    p[0] = alpha*activate_1(not_q1, Kd*omega, n)*omega
+    p[1] = delta*i1
+    p[2] = alpha*activate_1(q1, Kd*omega, n)*omega
     p[3] = delta*i2
-	
-    #propensities    
+
+    #propensities
     return p
 
-# ADDRESSING 2-BIT QSSA MODEL 
-def addressing_stochastic_two_bit_model(Y, T, params, omega):   
+# ADDRESSING 2-BIT QSSA MODEL
+def addressing_stochastic_two_bit_model(Y, T, params, omega):
     alpha, delta, Kd, n = params
     _, _, q1, not_q1, _, _, q2, not_q2, i1, i2, i3, i4 = Y
-    p = np.zeros(8)  
-	
-    p[0] = alpha * activate_2(not_q1, not_q2, Kd*omega, n)*omega 
-    p[1] = delta * i1
-    p[2] = alpha * activate_2(q1, not_q2, Kd*omega, n)*omega  
-    p[3] = delta * i2 
-    p[4] = alpha * activate_2(q1, q2, Kd*omega, n)*omega    
-    p[5] = delta * i3  
-    p[6] = alpha * activate_2(not_q1, q2, Kd*omega, n)*omega
-    p[7] = delta * i4    
-			
-    #propensities    
-    return p 
+    p = np.zeros(8)
 
-# ADDRESSING 3-BIT QSSA MODEL 
-def addressing_stochastic_three_bit_model(Y, T, params, omega):   
+    p[0] = alpha * activate_2(not_q1, not_q2, Kd*omega, n)*omega
+    p[1] = delta * i1
+    p[2] = alpha * activate_2(q1, not_q2, Kd*omega, n)*omega
+    p[3] = delta * i2
+    p[4] = alpha * activate_2(q1, q2, Kd*omega, n)*omega
+    p[5] = delta * i3
+    p[6] = alpha * activate_2(not_q1, q2, Kd*omega, n)*omega
+    p[7] = delta * i4
+
+    #propensities
+    return p
+
+# ADDRESSING 3-BIT QSSA MODEL
+def addressing_stochastic_three_bit_model(Y, T, params, omega):
     alpha, delta, Kd, n = params
-    _, _, q1, not_q1, _, _, q2, not_q2, _, _, q3, not_q3, i1, i2, i3, i4, i5, i6 = Y 
-    p = np.zeros(12)  
-	
+    _, _, q1, not_q1, _, _, q2, not_q2, _, _, q3, not_q3, i1, i2, i3, i4, i5, i6 = Y
+    p = np.zeros(12)
+
     p[0] = alpha * activate_2(not_q1, not_q3, Kd*omega, n)*omega
     p[1] = delta * i1
-    p[2] = alpha * activate_2(q1, not_q2, Kd*omega, n)*omega 
+    p[2] = alpha * activate_2(q1, not_q2, Kd*omega, n)*omega
     p[3] = delta * i2
     p[4] = alpha * activate_2(q2, not_q3, Kd*omega, n)*omega
     p[5] = delta * i3
     p[6] = alpha * activate_2(q1, q3, Kd*omega, n)*omega
     p[7] = delta * i4
     p[8] = alpha * activate_2(not_q1, q2, Kd*omega, n)*omega
-    p[9] = delta * i5  
-    p[10] = alpha * activate_2(not_q2, q3, Kd*omega, n)*omega  
-    p[11] = delta * i6    	
-	
-	#propensities      
-    return p   	 	
+    p[9] = delta * i5
+    p[10] = alpha * activate_2(not_q2, q3, Kd*omega, n)*omega
+    p[11] = delta * i6
+
+	#propensities
+    return p
 
 # ONE BIT ADDRESSING MODEL SIMPLE
 def one_bit_simple_addressing_ode_model(Y, T, params):
     alpha, delta, Kd, n = params
-    
+
     q1, not_q1, i1, i2 = Y
 
     di1_dt = alpha * activate_1(not_q1, Kd, n) - delta * i1
     di2_dt = alpha * activate_1(q1, Kd, n) - delta * i2
-    
+
     return np.array([di1_dt, di2_dt])
 
-   
+
 # TWO BIT ADDRESSING MODEL SIMPLE
 def two_bit_simple_addressing_ode_model(Y, T, params):
     alpha, delta, Kd, n = params
-    
+
     q1, not_q1, q2, not_q2, i1, i2, i3, i4 = Y
 
     di1_dt = alpha * activate_2(not_q1, not_q2, Kd, n) - delta * i1
@@ -173,7 +191,7 @@ def two_bit_simple_addressing_ode_model(Y, T, params):
 # THREE BIT ADDRESSING MODEL SIMPLE
 def three_bit_simple_addressing_ode_model(Y, T, params):
     alpha, delta, Kd, n = params
-    
+
     q1, not_q1, q2, not_q2, q3, not_q3, i1, i2, i3, i4, i5, i6 = Y
 
     di1_dt = alpha * activate_2(not_q1, not_q3, Kd, n) - delta * i1
@@ -188,14 +206,14 @@ def three_bit_simple_addressing_ode_model(Y, T, params):
 # FOUR BIT ADDRESSING MODEL SIMPLE
 def four_bit_simple_addressing_ode_model(Y, T, params):
     alpha, delta, Kd, n = params
-    
+
     q1, not_q1, q2, not_q2, q3, not_q3, q4, not_q4, i1, i2, i3, i4, i5, i6, i7, i8 = Y
 
     di1_dt = alpha * activate_2(not_q1, not_q4, Kd, n) - delta * i1
     di2_dt = alpha * activate_2(q1, not_q2, Kd, n) - delta * i2
     di3_dt = alpha * activate_2(q2, not_q3, Kd, n) - delta * i3
     di4_dt = alpha * activate_2(q3, not_q4, Kd, n) - delta * i4
-    
+
     di5_dt = alpha * activate_2(q1, q4, Kd, n) - delta * i5
     di6_dt = alpha * activate_2(not_q1, q2, Kd, n) - delta * i6
     di7_dt = alpha * activate_2(not_q2, q3, Kd, n) - delta * i7
@@ -209,12 +227,12 @@ def four_bit_simple_addressing_ode_model(Y, T, params):
 """
 JOHSON COUNTER MODELS 
 """
-	
+
 # TOP MODEL (JOHNSON): ONE BIT MODEL WITH EXTERNAL CLOCK
 def one_bit_model(Y, T, params):
     a, not_a, q, not_q= Y
 
-    clk = get_clock(T) 
+    clk = get_clock(T)
 
     d = not_q
     Y_FF1 = [a, not_a, q, not_q, d, clk]
@@ -223,15 +241,15 @@ def one_bit_model(Y, T, params):
 
     return dY
 
-# TOP MODEL (JOHNSON): TWO BIT MODEL WITH EXTERNAL CLOCK    
-def two_bit_model(Y, T, params): 
+# TOP MODEL (JOHNSON): TWO BIT MODEL WITH EXTERNAL CLOCK
+def two_bit_model(Y, T, params):
     a1, not_a1, q1, not_q1, a2, not_a2, q2, not_q2 = Y
 
-    clk = get_clock(T) 
+    clk = get_clock(T)
 
     d1 = not_q2
     d2 = q1
-    
+
     Y_FF1 = [a1, not_a1, q1, not_q1, d1, clk]
     Y_FF2 = [a2, not_a2, q2, not_q2, d2, clk]
 
@@ -242,16 +260,16 @@ def two_bit_model(Y, T, params):
 
     return dY
 
-# TOP MODEL (JOHNSON): THREE BIT MODEL WITH EXTERNAL CLOCK    
+# TOP MODEL (JOHNSON): THREE BIT MODEL WITH EXTERNAL CLOCK
 def three_bit_model(Y, T, params):
     a1, not_a1, q1, not_q1, a2, not_a2, q2, not_q2, a3, not_a3, q3, not_q3 = Y
 
-    clk = get_clock(T) 
+    clk = get_clock(T)
 
     d1 = not_q3
     d2 = q1
     d3 = q2
-    
+
     Y_FF1 = [a1, not_a1, q1, not_q1, d1, clk]
     Y_FF2 = [a2, not_a2, q2, not_q2, d2, clk]
     Y_FF3 = [a3, not_a3, q3, not_q3, d3, clk]
@@ -264,11 +282,11 @@ def three_bit_model(Y, T, params):
 
     return dY
 
-# TOP MODEL (JOHNSON): FOUR BIT MODEL WITH EXTERNAL CLOCK    
+# TOP MODEL (JOHNSON): FOUR BIT MODEL WITH EXTERNAL CLOCK
 def four_bit_model(Y, T, params):
     a1, not_a1, q1, not_q1, a2, not_a2, q2, not_q2, a3, not_a3, q3, not_q3, a4, not_a4, q4, not_q4 = Y
 
-    clk = get_clock(T) 
+    clk = get_clock(T)
 
     d1 = not_q4
     d2 = q1
@@ -294,29 +312,29 @@ def four_bit_model(Y, T, params):
 JOHSON COUNTER MODELS THAT USE FLIP-FLOPS WITH ASYNCRHONOUS SET/RESET
 dodano 23. 1. 2020
 """
-	
+
 # TOP MODEL (JOHNSON): ONE BIT MODEL WITH EXTERNAL CLOCK AND FLIP-FLOPS WITH ASYNCRHONOUS SET/RESET
 def one_bit_model_RS(Y, T, params):
     a, not_a, q, not_q, R, S = Y
 
-    clk = get_clock(T) 
+    clk = get_clock(T)
 
     d = not_q
     Y_FF1 = [a, not_a, q, not_q, d, clk, R, S]
 
     dY = ff_ode_model_RS(Y_FF1, T, params)
-    
+
     return dY
 
-# TOP MODEL (JOHNSON): TWO BIT MODEL WITH EXTERNAL CLOCK AND FLIP-FLOPS WITH ASYNCRHONOUS SET/RESET    
-def two_bit_model_RS(Y, T, params): 
+# TOP MODEL (JOHNSON): TWO BIT MODEL WITH EXTERNAL CLOCK AND FLIP-FLOPS WITH ASYNCRHONOUS SET/RESET
+def two_bit_model_RS(Y, T, params):
     a1, not_a1, q1, not_q1, a2, not_a2, q2, not_q2, R1, S1, R2, S2 = Y
 
-    clk = get_clock(T) 
+    clk = get_clock(T)
 
     d1 = not_q2
     d2 = q1
-    
+
     Y_FF1 = [a1, not_a1, q1, not_q1, d1, clk, R1, S1]
     Y_FF2 = [a2, not_a2, q2, not_q2, d2, clk, R2, S2]
 
@@ -327,17 +345,17 @@ def two_bit_model_RS(Y, T, params):
 
     return dY
 
-# TOP MODEL (JOHNSON): THREE BIT MODEL WITH EXTERNAL CLOCK AND FLIP-FLOPS WITH ASYNCRHONOUS SET/RESET    
+# TOP MODEL (JOHNSON): THREE BIT MODEL WITH EXTERNAL CLOCK AND FLIP-FLOPS WITH ASYNCRHONOUS SET/RESET
 def three_bit_model_RS(Y, T, params):
     a1, not_a1, q1, not_q1, a2, not_a2, q2, not_q2, a3, not_a3, q3, not_q3, R1, S1, R2, S2, R3, S3 = Y
 
-    clk = get_clock(T) 
+    clk = get_clock(T)
 
     d1 = not_q3
     d2 = q1
     d3 = q2
 
-       
+
     Y_FF1 = [a1, not_a1, q1, not_q1, d1, clk, R1, S1]
     Y_FF2 = [a2, not_a2, q2, not_q2, d2, clk, R2, S2]
     Y_FF3 = [a3, not_a3, q3, not_q3, d3, clk, R3, S3]
@@ -367,8 +385,8 @@ def one_bit_processor_ext(Y, T, params_johnson, params_addr):
 
     Y_johnson = [a1, not_a1, q1, not_q1]
     Y_address = [q1, not_q1, i1, i2]
-    
-    
+
+
     dY_johnson = one_bit_model(Y_johnson, T, params_johnson)
     dY_addr = one_bit_simple_addressing_ode_model(Y_address, T, params_addr)
 
@@ -382,8 +400,8 @@ def two_bit_processor_ext(Y, T, params_johnson, params_addr):
 
     Y_johnson = [a1, not_a1, q1, not_q1, a2, not_a2, q2, not_q2]
     Y_address = [q1, not_q1, q2, not_q2, i1, i2, i3, i4]
-    
-    
+
+
     dY_johnson = two_bit_model(Y_johnson, T, params_johnson)
     dY_addr = two_bit_simple_addressing_ode_model(Y_address, T, params_addr)
 
@@ -396,8 +414,8 @@ def three_bit_processor_ext(Y, T, params_johnson, params_addr):
 
     Y_johnson = [a1, not_a1, q1, not_q1, a2, not_a2, q2, not_q2, a3, not_a3, q3, not_q3]
     Y_address = [q1, not_q1, q2, not_q2, q3, not_q3, i1, i2, i3, i4, i5, i6]
-    
-    
+
+
     dY_johnson = three_bit_model(Y_johnson, T, params_johnson)
     dY_addr = three_bit_simple_addressing_ode_model(Y_address, T, params_addr)
 
@@ -410,8 +428,8 @@ def four_bit_processor_ext(Y, T, params_johnson, params_addr):
 
     Y_johnson = [a1, not_a1, q1, not_q1, a2, not_a2, q2, not_q2, a3, not_a3, q3, not_q3, a4, not_a4, q4, not_q4]
     Y_address = [q1, not_q1, q2, not_q2, q3, not_q3, q4, not_q4, i1, i2, i3, i4, i5, i6, i7, i8]
-    
-    
+
+
     dY_johnson = four_bit_model(Y_johnson, T, params_johnson)
     dY_addr = four_bit_simple_addressing_ode_model(Y_address, T, params_addr)
 
@@ -436,8 +454,8 @@ def one_bit_processor_ext_RS(Y, T, params_johnson_RS, params_addr):
 
     Y_johnson = [a1, not_a1, q1, not_q1, R1, S1]
     Y_address = [q1, not_q1, i1, i2]
-    
-    
+
+
     dY_johnson = one_bit_model_RS(Y_johnson, T, params_johnson_RS)
     dY_addr = one_bit_simple_addressing_ode_model(Y_address, T, params_addr)
 
@@ -456,8 +474,8 @@ def two_bit_processor_ext_RS(Y, T, params_johnson_RS, params_addr):
 
     Y_johnson = [a1, not_a1, q1, not_q1, a2, not_a2, q2, not_q2, R1, S1, R2, S2]
     Y_address = [q1, not_q1, q2, not_q2, i1, i2, i3, i4]
-    
-    
+
+
     dY_johnson = two_bit_model_RS(Y_johnson, T, params_johnson_RS)
     dY_addr = two_bit_simple_addressing_ode_model(Y_address, T, params_addr)
 
@@ -469,7 +487,7 @@ def three_bit_processor_ext_RS(Y, T, params_johnson_RS, params_addr, jump_src, j
     a1, not_a1, q1, not_q1, a2, not_a2, q2, not_q2, a3, not_a3, q3, not_q3, i1, i2, i3, i4, i5, i6  = Y
 
     i_src = eval(i_src)
-    
+
     R = [0,0,0]
     S = [0,0,0]
 
@@ -484,8 +502,8 @@ def three_bit_processor_ext_RS(Y, T, params_johnson_RS, params_addr, jump_src, j
 
     Y_johnson = [a1, not_a1, q1, not_q1, a2, not_a2, q2, not_q2, a3, not_a3, q3, not_q3, R1, S1, R2, S2, R3, S3]
     Y_address = [q1, not_q1, q2, not_q2, q3, not_q3, i1, i2, i3, i4, i5, i6]
-    
-    
+
+
     dY_johnson = three_bit_model_RS(Y_johnson, T, params_johnson_RS)
     dY_addr = three_bit_simple_addressing_ode_model(Y_address, T, params_addr)
 
@@ -506,10 +524,10 @@ def three_bit_processor_ext_RS_cond(Y, T, params_johnson_RS, params_addr, jump_s
     x0_cond, delta_cond, KD_cond, condition_type = condition
     cond = get_condition(x0_cond, delta_cond, T)
 
-    
 
-    i_src = eval(i_src)   
-    
+
+    i_src = eval(i_src)
+
     R = np.array([0,0,0])
     S = np.array([0,0,0])
 
@@ -531,8 +549,8 @@ def three_bit_processor_ext_RS_cond(Y, T, params_johnson_RS, params_addr, jump_s
 
     Y_johnson = [a1, not_a1, q1, not_q1, a2, not_a2, q2, not_q2, a3, not_a3, q3, not_q3, R1, S1, R2, S2, R3, S3]
     Y_address = [q1, not_q1, q2, not_q2, q3, not_q3, i1, i2, i3, i4, i5, i6]
-    
-    
+
+
     dY_johnson = three_bit_model_RS(Y_johnson, T, params_johnson_RS)
     dY_addr = three_bit_simple_addressing_ode_model(Y_address, T, params_addr)
 
