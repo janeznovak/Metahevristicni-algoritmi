@@ -68,7 +68,7 @@ class SolverPSO:
         self.toolbox = base.Toolbox()
         self.toolbox.register("particle", self.generateCandidate)
         self.toolbox.register("population", tools.initRepeat, list, self.toolbox.particle)
-        self.toolbox.register("update", self.updateParticle, phi1=2.0, phi2=2.0)
+        self.toolbox.register("update", self.updateParticle1, phi1=2.0, phi2=2.0)
 
         # estimate initial values with GA
 
@@ -279,6 +279,7 @@ class SolverPSO:
                     print(f'This is part.best.fitness: {part.best.fitness}')
                     print(f'This is part.best.fitness.values: {part.best.fitness.values}')
                     print(f'This is best: {best}')
+                    print(f'This is best.fitness: {best.fitness}')
 
                     i = i + 1
             # Now we got the local best position of each particle and global best particle. We need to update their
@@ -287,12 +288,11 @@ class SolverPSO:
 
             # When we go through all the particles, we need to put i at 0 again
             i = 0
-
-            # Find the global best, which is the best of the best
-            # TODO find the best
+            for part in self.pop:
+                self.toolbox.update(part, best)
 
             # Now that we have the global best, we need to update all the particles
-            exit(999)
+            # exit(999)
 
 
     def generateCandidate(self):
@@ -528,6 +528,11 @@ class SolverPSO:
             elif abs(speed) > part.smax:
                 part.speed[i] = math.copysign(part.smax, speed)
         part[:] = list(map(operator.add, part, part.speed))
+        for i in range(len(part)):
+            if part[i] < self.model.parameter_values[self.model.params[i]]["min"]:
+                part[i] = self.model.parameter_values[self.model.params[i]]["min"] + random.uniform(0, 1)
+            if part[i] > self.model.parameter_values[self.model.params[i]]["max"]:
+                part[i] = self.model.parameter_values[self.model.params[i]]["max"] - random.uniform(0, 1)
 
     def check_params(self, particle):
         for i in range(len(particle)):
