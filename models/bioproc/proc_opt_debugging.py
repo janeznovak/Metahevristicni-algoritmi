@@ -199,7 +199,7 @@ class BioProc:
 				pass   
 		t_fitness = t_fitness/2.0      
 		
-		print(t_fitness) 
+		# print(t_fitness) 
 		return t_fitness,               		
 		
 	def isViable(self, point):  

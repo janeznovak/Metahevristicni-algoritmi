@@ -78,12 +78,12 @@ creator.create("Candidate", list, fitness=creator.FitnessMax)
 global cunt
 
 class Solver:
-    def __init__(self, model, populationSize=100, NGEN = 100, nsamples = 1e5):
+    def __init__(self, model, populationSize=150, NGEN = 100, nsamples = 1e5):
         self.model = model                   
         self.populationSize = populationSize          
         self.NGEN = NGEN              
         self.nsamples = int(nsamples)       
-        self.indpb = 0.75           
+        self.indpb = 0.75          
         
         #GA operators
         #creator.create("FitnessMax", base.Fitness, weights=(1.0,)) 
@@ -93,17 +93,21 @@ class Solver:
         self.toolbox.register("population", tools.initRepeat, list, self.toolbox.candidate)  
         self.toolbox.register("mate", tools.cxTwoPoint)
         self.toolbox.register("mutate", self.mutateCandidate, indpb=self.indpb, mult=0.5)      
-        self.toolbox.register("select", tools.selTournament, tournsize=int(self.populationSize/10))             
+        self.toolbox.register("select", tools.selTournament, tournsize=int(self.populationSize/10))
+
     
     #estimate initial values with GA
     def findNominalValues(self):
         fitness = self.model.modes[0]
-        ff = fitness([33.706, 16.347, 14.181, 34.356, 2.913, 0.4983,  2.0619,  4.886, 37.874,  0.413,  7.451,  4.153])
-        print("This is fitness value of one: " + str(ff))
+        # ff = fitness([33.706, 16.347, 14.181, 34.356, 2.913, 0.4983,  2.0619,  4.886, 37.874,  0.413,  7.451,  4.153])
+        # print("This is fitness value of one: " + str(ff))
 
 
         tic = time.perf_counter()                         
-        nominalVals = []   
+        nominalVals = []
+        times = []
+        itsFitness = []
+        bestFitInIter = []
         
         for evalMode in self.model.modes: 
             nominalValsMode = []
@@ -120,39 +124,67 @@ class Solver:
             
             for gen in range(self.NGEN):  
                 print("This is generation: " + str(gen))
-                print("This is length of NGEN: " + str(self.NGEN))
+                # print("This is length of NGEN: " + str(self.NGEN))
                 #generate offspprings with crossover and mutations
                 offspring = algorithms.varAnd(self.popu, self.toolbox, cxpb=0.5, mutpb=0.75)
-                print("Offspring is done")
-                print("This is type of offspring: " + str(type(offspring)))
-                print("This is length of offspring: " + str(len(offspring)))
-                print("THIS IS OFFSPRING:")
-                print(*offspring)
+                # print("Offspring is done")
+                # print("This is type of offspring: " + str(type(offspring)))
+                # print("This is length of offspring: " + str(len(offspring)))
+                # print("THIS IS OFFSPRING:")
+                # print(*offspring)
                 #evaluate individuals
                 fits = self.toolbox.map(self.toolbox.evaluate, offspring)
                 print("Fits is done")
                 counter = 0
+                maxInIter = -100
                 for fit, ind in zip(fits, offspring):
+                    if fit[0] > maxInIter:
+                        maxInIter = fit
                     print("Counter:" + str(counter))
-                    print("This is ind:")
-                    print(ind)
+                    # print("This is ind:")
+                    # print(ind)
                     print("And this is fit:")
                     print(fit)
                     if self.model.isViable(ind, fitness=fit) and ind not in nominalValsMode:      
-                        nominalValsMode.append(ind)          
+                        nominalValsMode.append(ind)
+                        itsFitness.append(fit)    
                     ind.fitness.values = fit
                     counter = counter + 1
+                bestFitInIter.append(maxInIter)
                 blop = time.perf_counter()
                 print("Time so far: " + str(blop - tic) + "s")
                 #roulete wheel selection
-                self.popu = self.toolbox.select(offspring, k=len(self.popu))      
+                self.popu = self.toolbox.select(offspring, k=len(self.popu))
+                tuc = time.perf_counter()
+                times.append(tuc - tic)
+
             
             pool.close()
-            print("Number of viable points: " + str(len(nominalValsMode))) 
+            print("Number of viable points: " + str(len(nominalValsMode)))
             nominalVals.extend(nominalValsMode)     
         toc = time.perf_counter()
-        print("Elapsed time: " + str(toc - tic) + "s")                          
-        return nominalVals        
+        times.append(toc - tic)
+        print("Elapsed time: " + str(toc - tic) + "s")
+
+        with open("bestInIterationGA-1-18-08.2022.txt", "a") as resultFile:
+            print(f"file oppened")
+            count = 0
+            for best in bestFitInIter:
+                if count == len(bestFitInIter) - 1:
+                    resultFile.write(str(count) + " " + str(best) + " " + str(times[count + 1]) + " " + "\n")
+                else:
+                    print(best)
+                    resultFile.write(str(count) + " " + str(best) + " " + str(times[count]) + "\n")
+                count += 1
+            count = 0
+            resultFile.write("good enough:\n")
+            for bestIn in nominalVals:
+                resultFile.write(str(bestIn) + " " + str(itsFitness[count]) + "\n")
+                count += 1
+            resultFile.write("\n")
+            resultFile.write("\n")
+
+        return nominalVals
         
     #creates an array of random candidates  
     def generateCandidate(self): 
@@ -352,7 +384,7 @@ class Solver:
         if not viablePoints: 
             print("No viable points found!")  
             return
-        exit(99)
+        return
         
         #dump viable points to file  
         pickle.dump(viablePoints, open(filename + "ViableSet_IterGA.p", "wb+"))   
@@ -461,9 +493,13 @@ if __name__ == '__main__':
     #flip flop with instructions external clock  
     filename =  os.path.join(".", "bioproc", "three_bit_model_new_new", "bioproc")                                                 
     print(filename)        
-    model = BioProc(np.array(["protein_production", "protein_production", "protein_production", "protein_production", "protein_degradation", "protein_degradation", "Kd","hill", "protein_production", "protein_degradation", "Kd", "hill"]), model_mode=three_bit_processor_ext, parameter_values=param_values, avg_dev=30)                                         
-    solver = Solver(model)                         
-    solver.run(filename, maxDepth=1) #do not cluster         
+    model = BioProc(np.array(["protein_production", "protein_production", "protein_production", "protein_production", "protein_degradation", "protein_degradation", "Kd","hill", "protein_production", "protein_degradation", "Kd", "hill"]), model_mode=one_bit_processor_ext, parameter_values=param_values, avg_dev=30)                                         
+    for i in range(9):
+        print(f"In range {i}")
+        solver = Solver(model)                         
+        solver.run(filename, maxDepth=1) #do not cluster
+    # solver = Solver(model)                         
+    # solver.run(filename, maxDepth=1) #do not cluster         
 
     """ 
     model modes: 

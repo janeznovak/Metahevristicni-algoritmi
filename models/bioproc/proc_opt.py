@@ -180,7 +180,7 @@ class BioProc:
         # print("Candidate:")
         # print(candidate)
         self.cunt = self.cunt + 1
-        print("This is cunt: " + str(self.cunt))
+        # print("This is cunt: " + str(self.cunt))
 
 
         if ins == None and ffs == None:
@@ -210,10 +210,10 @@ class BioProc:
 
         t_fitness = t_fitness / 2.0
 
-        print(t_fitness)
+        # print(t_fitness)
         if t_fitness > self.best:
             self.best = t_fitness
-            print("This is best so far I guess: " + str(self.best))
+            # print("This is best so far I guess: " + str(self.best))
         return t_fitness,
 
     def isViable(self, point, fitness=None):

@@ -20,6 +20,7 @@ from bioproc.proc_models import *
 
 import time
 import multiprocessing
+import os
 
 class wolf:
     def __init__(self, fitness, model):
@@ -28,8 +29,18 @@ class wolf:
         for ind in range(model.nParams):
             candidate.append(random.uniform(model.parameter_values[model.params[ind]]["min"],
                                             model.parameter_values[model.params[ind]]["max"]))
+        for j in range(model.nParams):
+            if candidate[j] > model.parameter_values[model.params[j]]["max"]:
+                print("too high")
+                exit(77)
+            if candidate[j] < model.parameter_values[model.params[j]]["min"]:
+                print("too low")
+                exit(78)
+            
+
+
         self.position = candidate
-        self.fitness = fitness(self.position)  # curr fitness
+        self.fitness = fitness(self.position)  # curr fitness Check if the fitness is ok, if not change it to edge, like below in the code
         self.xnew = np.zeros(12)
 
 
@@ -45,7 +56,7 @@ The main class
 
 
 class SolverGWOGFG:
-    def __init__(self, model, populationSize=150, NGEN=100, nsamples=1e5):
+    def __init__(self, model, populationSize=300, NGEN=100, nsamples=1e5):
         self.model = model
         self.populationSize = populationSize
         self.NGEN = NGEN
@@ -54,18 +65,24 @@ class SolverGWOGFG:
 
 
     def findNominalValues(self):
+        print(f"Number of cpus: {multiprocessing.cpu_count()}")
+        print(f"Number of cpus from os: {os.cpu_count()}")
         pool = multiprocessing.Pool()
         rnd = random.Random(0)
         bestInIteration = []
+        goodEnough = []
+        times = []
 
         arguments = [[self.model.modes[0], self.model]] * self.populationSize
 
         res = pool.map(create_object, arguments)
-        print(res)
-        print("Going to sleep")
+        #print(res)
+        #print("Going to sleep")
         time.sleep(5)
-        print("Out of sleep")
+        #print("Out of sleep")
 
+        # start time
+        tic = time.perf_counter()
 
         # We sort it reversed, so it is descending, because wee need maximization
         population = sorted(res, key=lambda temp: temp.fitness, reverse=True)
@@ -73,18 +90,19 @@ class SolverGWOGFG:
         # best 3 solutions will be called as
         # alpha, beta and gama
         alpha_wolf, beta_wolf, gamma_wolf = copy.copy(population[: 3])
-        print("Best first")
-        print(alpha_wolf.fitness)
-        print(alpha_wolf.position)
-        print(beta_wolf.fitness)
-        print(beta_wolf.position)
-        print(gamma_wolf.fitness)
-        print(gamma_wolf.position)
+        #print("Best first")
+        #print(alpha_wolf.fitness)
+        #print(alpha_wolf.position)
+        #print(beta_wolf.fitness)
+        #print(beta_wolf.position)
+        #print(gamma_wolf.fitness)
+        #print(gamma_wolf.position)
 
         # main loop of gwo
         Iter = 0
         posi = []
         negative_infinity = float('-inf')
+        bestFitInIteration = []
         while Iter < self.NGEN:
 
             # after every 10 iterations
@@ -93,7 +111,7 @@ class SolverGWOGFG:
                 print("Iter = " + str(Iter) + " best fitness = %.3f" % alpha_wolf.fitness + " and best position" + str(alpha_wolf.position))
 
             # linearly decreased from 2 to 0
-            a = 2 * (1 - Iter / self.NGEN / 10)
+            a = 2 * (1 - Iter / self.NGEN)
 
             posi.clear()
 
@@ -124,8 +142,8 @@ class SolverGWOGFG:
                         Xnew[j] = self.model.parameter_values[self.model.params[j]]["max"] - random.uniform(0, 1)
                     elif Xnew[j] < self.model.parameter_values[self.model.params[j]]["min"]:
                         Xnew[j] = self.model.parameter_values[self.model.params[j]]["min"] + random.uniform(0, 1)
-                if Iter % 2 == 0 and i in range(1, 5):
-                    print(Xnew)
+                #if Iter % 2 == 0 and i in range(1, 5):
+                #    print(Xnew)
                 population[i].xnew = Xnew
                 # self.check_parameters(Xnew)
                 posi.append(Xnew)
@@ -134,7 +152,7 @@ class SolverGWOGFG:
              # fitness calculation of new solution
             fnew = pool.map(self.model.modes[0], posi)
             for m in range(self.populationSize):
-                print(fnew[m] > population[m].fitness)
+                #print(fnew[m] > population[m].fitness)
                 if fnew[m][0] > bestBest:
                     bestBest = fnew[m][0]
                 # if fnew[m][0] < -1000:
@@ -142,10 +160,19 @@ class SolverGWOGFG:
                 #     exit(89)
                 # greedy selection
                 if fnew[m] > population[m].fitness:
-                    print(fnew[m])
+                    #print(fnew[m])
                     population[m].position = population[m].xnew
                     population[m].fitness = fnew[m]
-            bestInIteration.append(bestBest)
+                    # if population[m].fitness[0] >= -17:
+                    #     bestInIteration.append(population[m].fitness[0])
+                    #     goodEnough.append(population[m].position)
+                if fnew[m] != population[m].fitness and fnew[m][0] >= -30:
+                    bestInIteration.append(fnew[m][0])
+                    goodEnough.append(population[m].xnew)
+                    
+            #print(f"this is the best in this iteration: {bestBest}")
+            # if bestBest >= -17 and bestBest not in bestInIteration:
+            #     bestInIteration.append(bestBest)
             # On the basis of fitness values of wolves
             # sort the population in descending order
             population = sorted(population, key=lambda temp: temp.fitness, reverse=True)
@@ -153,79 +180,49 @@ class SolverGWOGFG:
             # best 3 solutions will be called as
             # alpha, beta and gama
             alpha_wolf, beta_wolf, gamma_wolf = copy.copy(population[: 3])
-
+            bestFitInIteration.append(alpha_wolf.fitness)
+            tuc = time.perf_counter()
+            print(f"this is the best in this iteration: {Iter}: {bestBest}, time: {tuc - tic}")
+            times.append(tuc - tic)
             Iter += 1
 
-        iterations = list(range(1, 151))
-        fig, ax = plt.subplots()
-        ax.plot(iterations, bestInIteration)
-        ax.set(xlabel='iteracije', ylabel='vrednost funkcije', title='graf vrednosti funkcije za GWO')
-        plt.show()
-        exit(89)
+        pool.close()
+        # stop time
+        tac = time.perf_counter()
+        endTime = tac - tic
+        times.append(endTime)
 
 
+        # print("The best ones", bestInIteration)
+        print(f"Number of found: {len(bestInIteration)}")
+        # put all the best in iteration in a file
+        with open("bestInIterationGWOGFG10-1-300-default-attack-01.09.2022.txt", "a") as resultFile:
+            print(f"opened the file")
+            count = 0
+            for best in bestFitInIteration:
+                print(f"writting to file: {best[0]}")
+                if count == len(bestFitInIteration) - 1:
+                    resultFile.write(str(count) + " " + str(best[0]) + " " + str(times[count]) + " " + str(times[count + 1]) + "\n")
+                else:
+                    resultFile.write(str(count) + " " + str(best[0]) + " " + str(times[count]) + "\n")
+                count += 1
+            count = 0
+            resultFile.write("good enough:\n")
+            for bestIn in bestInIteration:
+                resultFile.write(str(goodEnough[count]) + "\n")
+                count += 1
+            resultFile.write("\n")
+            resultFile.write("\n")
+        return
+
+        # iterations = list(range(1, 151))
+        # fig, ax = plt.subplots()
+        # ax.plot(iterations, bestInIteration)
+        # ax.set(xlabel='iteracije', ylabel='vrednost funkcije', title='graf vrednosti funkcije za GWO')
+        # plt.show()
+        # exit(89)
 
 
-
-
-
-
-
-        fitness = self.model.modes[0]
-        ff = fitness([33.706, 16.347, 14.181, 34.356, 2.913, 0.4983, 2.0619, 4.886, 37.874, 0.413, 7.451, 4.153])
-        print("This is fitness value of one: " + str(ff))
-        exit(19)
-
-        tic = time.perf_counter()
-        nominalVals = []
-
-        for evalMode in self.model.modes:
-            nominalValsMode = []
-
-            # initialize new random population
-            self.popu = self.toolbox.population(self.populationSize)
-            self.toolbox.register("evaluate", evalMode)
-
-            pool = multiprocessing.Pool()
-            self.toolbox.register("map", pool.map)
-
-            for gen in range(self.NGEN):
-                print("This is generation: " + str(gen))
-                print("This is length of NGEN: " + str(self.NGEN))
-                # generate offspprings with crossover and mutations
-                offspring = algorithms.varAnd(self.popu, self.toolbox, cxpb=0.5, mutpb=0.75)
-                print("Offspring is done")
-                print("This is type of offspring: " + str(type(offspring)))
-                print("This is length of offspring: " + str(len(offspring)))
-                print("THIS IS OFFSPRING:")
-                print(*offspring)
-                # evaluate individuals
-                fits = self.toolbox.map(self.toolbox.evaluate, offspring)
-                print("Fits is done")
-                counter = 0
-                for fit, ind in zip(fits, offspring):
-                    print("Counter:" + str(counter))
-                    print("This is ind:")
-                    print(ind)
-                    print("And this is fit:")
-                    print(fit)
-                    if self.model.isViable(ind, fitness=fit) and ind not in nominalValsMode:
-                        nominalValsMode.append(ind)
-                    ind.fitness.values = fit
-                    counter = counter + 1
-                blop = time.perf_counter()
-                print("Time so far: " + str(blop - tic) + "s")
-                # roulete wheel selection
-                self.popu = self.toolbox.select(offspring, k=len(self.popu))
-
-            pool.close()
-            print("Number of viable points: " + str(len(nominalValsMode)))
-            nominalVals.extend(nominalValsMode)
-        toc = time.perf_counter()
-        print("Elapsed time: " + str(toc - tic) + "s")
-        return nominalVals
-
-        # creates an array of random candidates
 
 
 
@@ -237,131 +234,6 @@ class SolverGWOGFG:
             if parameters[i] > self.model.parameter_values[self.model.params[i]]["max"]:
                 # print("Checking max")
                 parameters[i] = self.model.parameter_values[self.model.params[i]]["max"]
-
-    def getViablePoints(self, points):
-        pool = multiprocessing.Pool()
-
-        viables = np.array(pool.map(self.model.isViable, points))
-        viable = np.array(points)[viables]
-        """                
-        viable = list() 
-        i = 0
-        for point in points:  
-            i += 1
-            if i % 1000 == 0:
-                print(i)     
-
-            #check if point is viable 
-            if self.model.isViable(point): 
-                viable.append(point)        
-        """
-        pool.close()
-        return viable
-
-        # gap statistic method
-
-    # returns the optimal number of clusters
-    def gapStatistic(self, region, number_ref=10, max_clusters=2, plot=False):
-        # sample size is equal to the number of samples in gaussian sampling
-        sample_size = self.nsamples
-        subjects = np.array(region.points)
-        gaps = []
-        deviations = []
-        references = []
-        clusters_range = range(1, max_clusters + 1)
-
-        transformed = region.transform(subjects)
-        # get min and max parameter values in pca space
-        minP = np.min(transformed, axis=0)
-        maxP = np.max(transformed, axis=0)
-
-        for gap_clusters in clusters_range:
-            print(gap_clusters)
-            reference_inertia = []
-            for index in range(number_ref):
-                # OBB ... orientated bounding box
-                # random sampling within the PCA bounding box
-                reference = minP + random.rand(sample_size, self.model.nParams) * (maxP - minP)
-                reference = region.inverse_transform(reference)
-
-                kmeanModel = KMeans(gap_clusters)
-                kmeanModel.fit(reference)
-                reference_inertia.append(kmeanModel.inertia_)
-
-            kmeanModel = KMeans(gap_clusters)
-            kmeanModel.fit(subjects)
-            log_ref_inertia = np.log(reference_inertia)
-            # calculate gap
-            gap = np.mean(log_ref_inertia) - np.log(kmeanModel.inertia_)
-            sk = math.sqrt(1 + 1.0 / number_ref) * np.std(log_ref_inertia)
-            gaps.append(gap)
-            deviations.append(sk)
-
-            # Plot the gaps
-        if plot:
-            plt.clf()
-            ax = plt.gca()
-            ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-            ax.xaxis.set_major_locator(ticker.MultipleLocator(2))
-            lines = plt.errorbar(clusters_range, gaps, ecolor='dodgerblue', yerr=deviations, fmt='-',
-                                 color='dodgerblue')
-            plt.setp(lines[0], linewidth=1.5)
-            plt.ylabel('Gaps')
-            plt.show()
-
-            # return optimal number of clusters
-        for k in range(0, max_clusters - 1):
-            if gaps[k] >= gaps[k + 1] - deviations[k + 1]:
-                print("Optimal number of clusters: " + str(k + 1))
-                return k + 1
-        print("Optimal number of clusters: " + str(max_clusters))
-        return max_clusters
-
-    def setBoxColors(self, bp, nRegions, ax, colors=["#0E74C8", "#15A357", "r", "k"]):
-        colorLen = len(colors)
-
-        for i in range(nRegions):
-            col = colors[i % colorLen]
-            plt.setp(bp['boxes'][i], color=col, linewidth=1.5)
-            plt.setp(bp['caps'][2 * i], color=col, linewidth=1.5)
-            plt.setp(bp['caps'][2 * i + 1], color=col, linewidth=1.5)
-            plt.setp(bp['whiskers'][2 * i], color=col, linewidth=1.5)
-            plt.setp(bp['whiskers'][2 * i + 1], color=col, linewidth=1.5)
-            plt.setp(bp['fliers'][i], color=col)
-            plt.setp(bp['medians'][i], color=col, linewidth=1.5)
-
-    def plotParameterVariances(self, viableSets, names=None, units=None):
-        # go through all parameters
-        params = self.model.params
-        figure = plt.figure()
-        nRows = math.ceil(len(params) / 3)
-        for pcount, param in enumerate(params):
-            ax1 = plt.subplot(nRows, 3, pcount + 1)
-            # if names == None:
-            #   ax1.set_title(str(param) + str(pcount))
-            # else:
-            #   ax1.set_title(names[pcount])
-            if units != None:
-                plt.ylabel(names[pcount] + " " + units[pcount])
-            allRegions = []
-            # go through all regions
-            numSets = len(viableSets)
-            allNames = []
-            allBoxes = []
-            for count, reg in enumerate(viableSets):
-                points = np.array(reg.points)
-                data = points[:, pcount]
-                allRegions.append(data)
-                allNames.append("Region " + str(count + 1))
-            bp = ax1.boxplot(allRegions, positions=list(range(1, numSets + 1)), widths=0.4)
-            self.setBoxColors(bp, numSets, ax1)
-            allBoxes = bp['boxes']
-
-            # draw legend
-        figure.legend(allBoxes, allNames, 'lower right')
-        plt.show()
-
-        # Main method
 
     def run(self, filename, maxDepth=0):
         # filename is a file to which viable sets will be serialized
@@ -393,7 +265,9 @@ if __name__ == '__main__':
     model = BioProc(np.array(
         ["protein_production", "protein_production", "protein_production", "protein_production", "protein_degradation",
          "protein_degradation", "Kd", "hill", "protein_production", "protein_degradation", "Kd", "hill"]),
-                    model_mode=four_bit_processor_ext, parameter_values=param_values, avg_dev=30)
+    model_mode=one_bit_processor_ext, parameter_values=param_values, avg_dev=30)
+    #for i in range(10):
+    #print(f"In range {i}")
     solver = SolverGWOGFG(model)
     solver.run(filename, maxDepth=1)  # do not cluster
 

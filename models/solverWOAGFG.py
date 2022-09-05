@@ -1,7 +1,10 @@
 import copy
+from itertools import count
 import math
+from os import times
 import pickle
 import sys
+from unittest import result
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -55,7 +58,7 @@ def create_object(tuple):
 
 
 class SolverWOAGFG:
-    def __init__(self, model, populationSize=100, NGEN=100, nsamples=1e5):
+    def __init__(self, model, populationSize=3000, NGEN=10, nsamples=1e5):
         self.model = model
         self.populationSize = populationSize
         self.NGEN = NGEN
@@ -66,9 +69,12 @@ class SolverWOAGFG:
         bestInIteration = []
         pool = multiprocessing.Pool()
         rnd = random.Random(0)
+        goodEnough = []
+        itsFitness = []
+        times = []
+
 
         arguments = [[self.model.modes[0], self.model]] * self.populationSize
-        tic = time.perf_counter()
 
         whalePopulation = pool.map(create_object, arguments)
         print("WhalePopulation initialization done")
@@ -86,6 +92,7 @@ class SolverWOAGFG:
         # main loop
         Iter = 0
         posi = []
+        tic = time.perf_counter()
         while Iter < self.NGEN:
 
             # after every 10 iterations
@@ -103,7 +110,7 @@ class SolverWOAGFG:
                 A = 2 * a * rnd.random() - a
                 C = 2 * rnd.random()
                 b = 1
-                l = (a2 - 1) * rnd.random() + 1;
+                l = (a2 - 1) * rnd.random() + 1
                 p = rnd.random()
 
                 D = [0.0 for i in range(self.model.nParams)]
@@ -111,7 +118,7 @@ class SolverWOAGFG:
                 Xnew = [0.0 for i in range(self.model.nParams)]
                 Xrand = [0.0 for i in range(self.model.nParams)]
                 if p < 0.5:
-                    if abs(A) > 1:
+                    if abs(A) < 1: # mislim, da je tu obratno z else, sem spremenil v obratno, da vidimo
                         for j in range(self.model.nParams):
                             D[j] = abs(C * Xbest[j] - whalePopulation[i].position[j])
                             Xnew[j] = Xbest[j] - A * D[j]
@@ -130,16 +137,16 @@ class SolverWOAGFG:
                         D1[j] = abs(Xbest[j] - whalePopulation[i].position[j])
                         Xnew[j] = D1[j] * math.exp(b * l) * math.cos(2 * math.pi * l) + Xbest[j]
 
-                for j in range(self.model.nParams):
+                for j in range(self.model.nParams): #try with random in between min and max
                     if Xnew[j] > self.model.parameter_values[self.model.params[j]]["max"]:
                         Xnew[j] = self.model.parameter_values[self.model.params[j]]["max"] - random.uniform(0, 1)
                     elif Xnew[j] < self.model.parameter_values[self.model.params[j]]["min"]:
                         Xnew[j] = self.model.parameter_values[self.model.params[j]]["min"] + random.uniform(0, 1)
-                    else:
-                        whalePopulation[i].position1[j] = Xnew[j]
+                    # else: # if the parameter is ok, leave it
+                    #     whalePopulation[i].position1[j] = Xnew[j]
+                whalePopulation[i].position = Xnew
+                
                 posi.append(Xnew)
-            toc = time.perf_counter()
-            print(" This is time: " + str(toc - tic))
 
             # for i in range(self.populationSize):
             #     # if Xnew < minx OR Xnew > maxx
@@ -153,8 +160,11 @@ class SolverWOAGFG:
             # whalePopulation[i].fitness = fitness(whalePopulation[i].position)
             new = pool.map(self.model.modes[0], posi)
 
-            for i in range(self.populationSize):
+            for i in range(self.populationSize): # check if posi is check_parameters if it is do all same
                 if self.check_parameters(whalePopulation[i]):
+                    if new[i] != whalePopulation[i].fitness and new[i][0] >= -17:
+                        goodEnough.append(posi[i])
+                        itsFitness.append(new[i][0])
                     whalePopulation[i].fitness = new[i]
                     whalePopulation[i].position = posi[i]
                     if (new[i][0] > Fbest):
@@ -162,15 +172,38 @@ class SolverWOAGFG:
                         Fbest = whalePopulation[i].fitness
                         print("This is best fitness: " + str(Fbest))
                         print("At position: " + str(whalePopulation[i].position))
+            toc = time.perf_counter()
+            times.append(toc - tic)
             bestInIteration.append(-Fbest[0])
             Iter += 1
-
+        
+        tac = time.perf_counter()
+        endTime = tic - tac
+        times.append(endTime)
         # iterations = list(range(1, 101))
         # fig, ax = plt.subplots()
         # ax.plot(iterations, bestInIteration)
         # ax.set(xlabel='iteracije', ylabel='vrednost funkcije', title='graf vrednosti funkcije za WOA')
         # plt.show()
-        exit(11)
+        # print(goodEnough)
+        # print(itsFitness)
+        with open("bestInIterationWOAGFG10-4-3000-25-08-2022.txt", "a") as resultFile:
+            count = 0
+            for best in bestInIteration:
+                print(f"Writing to file: {best}")
+                if count == len(bestInIteration) - 1:
+                    resultFile.write(str(count) + " " + str(best) + " " + str(times[count]) + " " + str(times[count + 1]) + "\n")
+                else:
+                    resultFile.write(str(count) + " " + str(best) + " " + str(times[count]) + "\n")
+                count += 1
+            count = 0
+            resultFile.write("good enough: \n")
+            for bestIn in goodEnough:
+                resultFile.write(str(goodEnough[count]) + " " + str(itsFitness[count]) + "\n")
+                count += 1
+            resultFile.write("\n")
+            resultFile.write("\n")
+        return
 
 
 
@@ -466,9 +499,10 @@ if __name__ == '__main__':
     model = BioProc(np.array(
         ["protein_production", "protein_production", "protein_production", "protein_production", "protein_degradation",
          "protein_degradation", "Kd", "hill", "protein_production", "protein_degradation", "Kd", "hill"]),
-                    model_mode=three_bit_processor_ext, parameter_values=param_values, avg_dev=30)
-    solver = SolverWOAGFG(model)
-    solver.run(filename, maxDepth=1)  # do not cluster
+                    model_mode=four_bit_processor_ext, parameter_values=param_values, avg_dev=30)
+    for i in range(9):
+        solver = SolverWOAGFG(model)
+        solver.run(filename, maxDepth=1)  # do not cluster
 
     """ 
     model modes: 
